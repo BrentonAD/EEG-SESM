@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence
-import torchsnooper
+#import torchsnooper
 
 
 from sesm import (
@@ -89,12 +89,13 @@ class Model(nn.Module):
         self.fc = nn.Sequential(
             nn.BatchNorm1d(d_hidden),
             Swish(),
-            nn.Dropout(dropout),
+            # Dropout right before this final layer causing consistent classification of class 0 when used in the conceptizer
+            # nn.Dropout(dropout),
             nn.Linear(d_hidden, d_out),
         )
 
     def classifier(self, sentence, sent_mask=None):
-        x = self.embed(sentence.unsqueeze(1))
+        x = self.embed(sentence)
         # (Batch, Hidden, Seqlen//2)
         x = self.selected_encoder(x)
         x = x.reshape(x.shape[0], -1)
@@ -107,7 +108,7 @@ class Model(nn.Module):
         """
 
         ## embed
-        x = self.embed(sentence.unsqueeze(1)).transpose(-2, -1)
+        x = self.embed(sentence).transpose(-2, -1)
         # x = self.embed(sentence.unsqueeze(-1))
         # (Batch, Seqlen, Embed)
         if sent_mask is not None:
@@ -236,7 +237,7 @@ class Model(nn.Module):
 
     def _locality_term(self, sequential_selector, sent_mask):
         if sent_mask is not None:
-            return (sequential_selector.sum(2) / sent_mask.unsqueeze(1).sum(2)).sum()
+            return (sequential_selector.sum(2) / sent_mask.sum(2)).sum()
         else:
             return (sequential_selector.mean(2)).sum()
 

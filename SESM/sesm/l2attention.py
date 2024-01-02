@@ -3,7 +3,7 @@ from torch import norm
 import torch.nn as nn
 import torch.nn.functional as F
 from math import sqrt
-from torchsnooper import snoop
+#from torchsnooper import snoop
 
 from sesm import GumbelSigmoid
 

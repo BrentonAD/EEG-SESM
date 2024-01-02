@@ -5,6 +5,7 @@ import pandas as pd
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 
+from datasets import ArrhythmiaDataset
 
 def log_selector(selector1, selector2, mask):
     assert selector1.shape[1] == selector2.shape[1], "different selector heads"
@@ -16,7 +17,8 @@ def log_selector(selector1, selector2, mask):
     indices = []
     j = 0
     while len(indices) < 50 and j < s1.shape[1]:
-        if mask[j]:
+        # Iterating over the mask like this may only work for single channel data?
+        if mask[0][j]:
             indices.append(j)
         j += np.random.randint(10)
 
@@ -40,24 +42,16 @@ def seed_everything(seed: int):
 
 
 def get_data(name="ecg", batch_size=64):
-    df = pd.read_csv("../dataset/ecg/mitbih.csv")
-    data_columns = df.columns[:-2].tolist()
-    X = torch.FloatTensor(np.array(df[data_columns].astype("float32")))
-    y = torch.LongTensor(np.array(df["class"]))
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, train_size=0.8, random_state=42, stratify=y
-    )
+    dataset = ArrhythmiaDataset('datasets/ecg', normalize=False)
+    
     train_dl = DataLoader(
-        TensorDataset(X_train, y_train), batch_size, shuffle=True, num_workers=4
+        TensorDataset(dataset.X_train, dataset.y_train), batch_size, shuffle=True, num_workers=4
     )
     test_dl = DataLoader(
-        TensorDataset(X_test, y_test), batch_size, shuffle=False, num_workers=4
+        TensorDataset(dataset.X_test, dataset.y_test), batch_size, shuffle=False, num_workers=4
     )
-
-    class_weights = (1 - (np.bincount(y_train) / y_train.shape[0])).tolist()
-    max_len = X.shape[1]
-    return train_dl, test_dl, class_weights, max_len
-
+    max_len = dataset.sequence_length
+    return train_dl, test_dl, dataset.class_weights, max_len
 
 def my_optim(params, lr, wd, warmup_steps, use_scheduler=False):
     optimizer = torch.optim.AdamW(

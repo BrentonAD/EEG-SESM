@@ -51,16 +51,17 @@ class ArrhythmiaDataset(BaseDataset):
 
         train_data = np.loadtxt(self.train_path, delimiter=",")
         test_data = np.loadtxt(self.test_path, delimiter=",")
-
-        self.X_train = train_data[:, :-1, np.newaxis]
+        
+        # Must call .permute(0, 2, 1) to swap the channels and sequence positions
+        self.X_train = torch.Tensor(train_data[:, :-1, np.newaxis]).permute(0, 2, 1)
         if normalize:
             self.X_train = self.X_train * 2.0 - 1.0
-        self.y_train = train_data[:, -1].astype(np.int)
+        self.y_train = torch.Tensor(train_data[:, -1])
 
-        self.X_test = test_data[:, :-1, np.newaxis]
+        self.X_test = torch.Tensor(test_data[:, :-1, np.newaxis]).permute(0, 2, 1)
         if normalize:
             self.X_test = self.X_test * 2.0 - 1.0
-        self.y_test = test_data[:, -1].astype(np.int)
+        self.y_test = torch.Tensor(test_data[:, -1])
 
         self.class_weights = (
             1 - (np.bincount(self.y_train) / self.y_train.shape[0])

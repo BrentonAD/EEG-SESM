@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 import torchmetrics
-import torchsnooper
+#import torchsnooper
 from sesm.modules.cnn import ConvNormPool
 
 from trainer import PLModel
@@ -26,8 +26,8 @@ def main():
 
     pl.seed_everything(config["seed"])
 
-    free_gpu_id = get_freer_gpu()
-    print("select gpu:", free_gpu_id)
+    # free_gpu_id = get_freer_gpu()
+    # print("select gpu:", free_gpu_id)
 
     train_loader, test_loader, class_weights, max_len = get_data(
         config["dataset"], config["batch_size"]
@@ -52,7 +52,7 @@ def main():
         )
         trainer = pl.Trainer(
             max_epochs=20,
-            gpus=[free_gpu_id],
+            #gpus=[free_gpu_id],
             logger=tb_logger,
             callbacks=[checkpoint_callback],
             gradient_clip_val=5,
@@ -94,7 +94,7 @@ def main():
         # deterministic=True,
         # auto_lr_find=True,
         max_epochs=100,
-        gpus=[free_gpu_id],
+        #gpus=[free_gpu_id],
         logger=tb_logger,
         callbacks=[checkpoint_callback],
         gradient_clip_val=5,

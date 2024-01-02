@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 import torchmetrics
-import torchsnooper
+#import torchsnooper
 
 from sesm import Model, log_selector, my_optim
 
@@ -29,16 +29,16 @@ class PLModel(pl.LightningModule):
     def init_metrics(self, k):
         self.named_metrics_train = nn.ModuleDict(
             {
-                "acc": torchmetrics.Accuracy(num_classes=k, average="micro"),
-                "avg_p": torchmetrics.Precision(num_classes=k, average="macro"),
-                "avg_r": torchmetrics.Recall(num_classes=k, average="macro"),
+                "acc": torchmetrics.Accuracy(task='multiclass', num_classes=k, average="micro"),
+                "avg_p": torchmetrics.Precision(task='multiclass', num_classes=k, average="macro"),
+                "avg_r": torchmetrics.Recall(task='multiclass', num_classes=k, average="macro"),
             }
         )
         self.named_metrics_val = nn.ModuleDict(
             {
-                "acc": torchmetrics.Accuracy(num_classes=k, average="micro"),
-                "avg_p": torchmetrics.Precision(num_classes=k, average="macro"),
-                "avg_r": torchmetrics.Recall(num_classes=k, average="macro"),
+                "acc": torchmetrics.Accuracy(task='multiclass', num_classes=k, average="micro"),
+                "avg_p": torchmetrics.Precision(task='multiclass', num_classes=k, average="macro"),
+                "avg_r": torchmetrics.Recall(task='multiclass', num_classes=k, average="macro"),
             }
         )
 
@@ -116,7 +116,7 @@ class PLModel(pl.LightningModule):
 
         return loss
 
-    def training_epoch_end(self, outputs):
+    def on_train_epoch_end(self):
         stage = "encoder_" if self.stage == 1 else ""
 
         for n, m in self.named_metrics_train.items():
@@ -140,7 +140,7 @@ class PLModel(pl.LightningModule):
 
         return loss
 
-    def validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self):
         stage = "encoder_" if self.stage == 1 else ""
         for n, m in self.named_metrics_val.items():
             self.log(f"{stage}val_epoch_{n}", m.compute(), prog_bar=True)

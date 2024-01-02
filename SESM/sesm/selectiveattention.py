@@ -2,7 +2,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchsnooper
+#import torchsnooper
 from sesm import GumbelSigmoid
 
 
@@ -46,8 +46,9 @@ class MultiHeadSelectiveAttention(nn.Module):
         # (Batch, n_heads, Seqlen)
 
         if mask is not None:
-            p_attn = p_attn.masked_fill(~mask.unsqueeze(1), 0.0)
-        if self.dropout is not None:
-            p_attn = self.dropout(p_attn)
+            p_attn = p_attn.masked_fill(~mask, 0.0)
+        # Dropout causes unbalanced values when training
+        # if self.dropout is not None:
+        #     p_attn = self.dropout(p_attn)
 
         return p_attn
