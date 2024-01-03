@@ -1,10 +1,9 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 import pytorch_lightning as pl
 import torchmetrics
-#import torchsnooper
 
 from sesm import Model, log_selector, my_optim
 
@@ -44,15 +43,14 @@ class PLModel(pl.LightningModule):
 
     def forward(self, x, y):
         mask = x != 0
-        # mask = None
         if self.stage == 1:
-            y_hat = self.model.classifier(x, mask)
-            loss = self.log_loss(y_hat, y, None)
+            y_hat = self.model.classifier(x)
+            loss = self.log_loss(y_hat, y, constraints=None)
             return loss
         else:
-            y_hat, constraints, attn1, attn2 = self.model(x, mask)
+            y_hat, constraints, selective_actions, relevance_weights = self.model(x, mask)
             loss = self.log_loss(y_hat, y, constraints)
-            return loss, y_hat, constraints, attn1, attn2
+            return loss, y_hat, constraints, selective_actions, relevance_weights
 
     def configure_optimizers(self):
         if self.stage == 1:
@@ -76,7 +74,7 @@ class PLModel(pl.LightningModule):
             stage = "val"
             named_metrics = self.named_metrics_val
         if self.stage == 1:
-            stage = "encoder_" + stage
+            stage = "embedder_" + stage
 
         y_loss = F.cross_entropy(
             y_hat, y.long(), weight=self.class_weights.to(y_hat.device)
@@ -104,15 +102,14 @@ class PLModel(pl.LightningModule):
         if self.stage == 1:
             loss = self(x, y)
         else:
-            loss, y_hat, constraints, attn1, attn2 = self(x, y)
-            # print(y_hat, y)
+            loss, y_hat, constraints, selective_actions, relevance_weights = self(x, y)
 
             # log
             if True and batch_idx % 100 == 0:
                 print("y_pred, y_true")
                 print(y_hat.argmax(dim=-1).detach().cpu().tolist())
                 print(y.detach().cpu().tolist())
-                log_selector(attn1, attn2, x != 0)
+                log_selector(selective_actions, relevance_weights, x != 0)
 
         return loss
 
@@ -128,15 +125,14 @@ class PLModel(pl.LightningModule):
         if self.stage == 1:
             loss = self(x, y)
         else:
-            loss, y_hat, constraints, attn1, attn2 = self(x, y)
-            # print(y_hat, y)
+            loss, y_hat, constraints, selective_actions, relevance_weights = self(x, y)
 
             # log
             if True and batch_idx % 10 == 0:
                 print("y_pred, y_true")
                 print(y_hat.argmax(dim=-1).detach().cpu().tolist())
                 print(y.detach().cpu().tolist())
-                log_selector(attn1, attn2, x != 0)
+                log_selector(selective_actions, relevance_weights, x != 0)
 
         return loss
 

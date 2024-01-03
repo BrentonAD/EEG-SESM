@@ -28,7 +28,7 @@ class MultiHeadSelectiveAttention(nn.Module):
         # x (Batch, Seqlen, d_embed)
 
         nbatches = x.size(0)
-        # 1) qkv分头线性映射
+        # 1) qkv split linear mapping
         # (Batch, n_heads, Seqlen, d_head)
         query = (
             self.w_q(x).view(nbatches, -1, self.n_heads, self.d_head).transpose(1, 2)
@@ -39,7 +39,7 @@ class MultiHeadSelectiveAttention(nn.Module):
 
         # print(query.shape, key.shape, value.shape)
 
-        # 2) 选择性(0-1) selective attention
+        # 2) Selectivity(0-1) selective attention
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.d_head)
         # (Batch, n_heads, Seqlen, Seqlen)
         p_attn = self.gumbel(torch.matmul(scores, value)).squeeze(-1)

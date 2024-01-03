@@ -1,16 +1,15 @@
 import json
 import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-import torchmetrics
-#import torchsnooper
-from sesm.modules.cnn import ConvNormPool
 
 from trainer import PLModel
-from sesm import get_data, EncoderClassifier, CNN
+from sesm import get_data
 
 import os
 
@@ -35,20 +34,18 @@ def main():
 
     config.update({"class_weights": class_weights, "max_len": max_len})
 
-    # train_encoder = True
-    train_encoder = False
-    if train_encoder:
+    if config.get("train_embedder"):
         model = PLModel(**config)
         early_stop_callback = EarlyStopping(
-            monitor="encoder_val_y_loss",
+            monitor="embedder_val_y_loss",
             patience=30,
             verbose=False,
         )
         checkpoint_callback = ModelCheckpoint(
-            monitor="encoder_val_y_loss", save_last=True
+            monitor="embedder_val_y_loss", save_last=True
         )
         tb_logger = pl.loggers.TensorBoardLogger(
-            name="encoder_cnn_ecg", save_dir="lightning_logs/"
+            name="embedder_cnn_ecg", save_dir="lightning_logs/"
         )
         trainer = pl.Trainer(
             max_epochs=20,
@@ -59,21 +56,17 @@ def main():
             gradient_clip_algorithm="value",
         )
         trainer.fit(model, train_loader, test_loader)
-        # model = PLModel.load_from_checkpoint(
-        #     checkpoint_path=checkpoint_callback.best_model_path, **config
-        # )
-        torch.save(model.model.cpu().state_dict(), "models/trained_encoder.pt")
+        model = PLModel.load_from_checkpoint(
+            checkpoint_path=checkpoint_callback.best_model_path, **config
+        )
+        torch.save(model.model.cpu().state_dict(), "models/trained_embedder.pt")
 
     model = PLModel(stage=2, **config)
-    model.model.load_state_dict(torch.load("models/trained_encoder.pt"))
+    model.model.load_state_dict(torch.load("models/trained_embedder.pt"))
 
     # fix embed
-    for p in model.model.embed.parameters():
+    for p in model.model.embedder.embed.parameters():
         p.requires_grad = False
-    # for p in model.model.fc.parameters():
-    #     p.requires_grad = False
-    # for p in encoder.parameters():
-    #     p.requires_grad = False
 
     # train sesm
     early_stop_callback = EarlyStopping(
