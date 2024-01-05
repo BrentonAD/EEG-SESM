@@ -74,7 +74,7 @@ def main():
         patience=30,
         verbose=False,
     )
-    checkpoint_callback = ModelCheckpoint(monitor="val_y_loss", save_last=True)
+    checkpoint_callback = ModelCheckpoint(monitor="val_loss", save_last=True)
     tb_logger = pl.loggers.TensorBoardLogger(
         name="sesm_ecg", save_dir="lightning_logs/"
     )

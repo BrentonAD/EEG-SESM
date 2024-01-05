@@ -97,14 +97,15 @@ class Aggregator(nn.Module):
             nn.Linear(d_hidden, d_out),
         )
     
-    def forward(self, x_concepts_encoded, relevance_weights):
+    def forward(self, x_concepts_encoded, relevance_weights, ignore_relevance_weights=False):
 
         (Batch, Heads) = relevance_weights.shape
 
         out = self.fc(x_concepts_encoded.reshape(Batch * Heads, -1))
-        out = (out.reshape(Batch, Heads, -1) * relevance_weights.unsqueeze(-1)).sum(
-                1
-            )
+        if not ignore_relevance_weights:
+            out = (out.reshape(Batch, Heads, -1) * relevance_weights.unsqueeze(-1)).sum(
+                    1
+                )
         return out
 
 class Model(nn.Module):
@@ -136,7 +137,7 @@ class Model(nn.Module):
         return self.aggregator.fc(x)
 
     # @torchsnooper.snoop()
-    def forward(self, sequence, sent_mask=None):
+    def forward(self, sequence, sent_mask=None, ignore_relevance_weights=False):
         """
         sequence: (Batch, Seqlen)
         """
@@ -154,7 +155,7 @@ class Model(nn.Module):
         # (Batch, Heads)
 
         ## Aggregate scores
-        out = self.aggregator(x_concepts_encoded, relevance_weights)
+        out = self.aggregator(x_concepts_encoded, relevance_weights, ignore_relevance_weights)
         # (Batch, d_out)
 
         ## Calculate regularisation constraints
