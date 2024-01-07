@@ -23,7 +23,7 @@ class PLModel(pl.LightningModule):
         self.init_metrics(kwargs["d_out"])
 
         self.model = Model(**kwargs)
-        self.stage = stage  # 1 for train encoder, 2 for train all
+        self.stage = stage  # 1 for train embedder, 2 for train all
 
     def init_metrics(self, k):
         self.named_metrics_train = nn.ModuleDict(
@@ -105,16 +105,16 @@ class PLModel(pl.LightningModule):
             loss, y_hat, constraints, selective_actions, relevance_weights = self(x, y)
 
             # log
-            if True and batch_idx % 100 == 0:
-                print("y_pred, y_true")
-                print(y_hat.argmax(dim=-1).detach().cpu().tolist())
-                print(y.detach().cpu().tolist())
-                log_selector(selective_actions, relevance_weights, x != 0)
+            # if True and batch_idx % 100 == 0:
+            #     print("y_pred, y_true")
+            #     print(y_hat.argmax(dim=-1).detach().cpu().tolist())
+            #     print(y.detach().cpu().tolist())
+            #     log_selector(selective_actions, relevance_weights, x != 0)
 
         return loss
 
     def on_train_epoch_end(self):
-        stage = "encoder_" if self.stage == 1 else ""
+        stage = "embedder_" if self.stage == 1 else ""
 
         for n, m in self.named_metrics_train.items():
             self.log(f"{stage}train_epoch_{n}", m.compute(), prog_bar=True)
@@ -128,16 +128,16 @@ class PLModel(pl.LightningModule):
             loss, y_hat, constraints, selective_actions, relevance_weights = self(x, y)
 
             # log
-            if True and batch_idx % 10 == 0:
-                print("y_pred, y_true")
-                print(y_hat.argmax(dim=-1).detach().cpu().tolist())
-                print(y.detach().cpu().tolist())
-                log_selector(selective_actions, relevance_weights, x != 0)
+            # if True and batch_idx % 10 == 0:
+            #     print("y_pred, y_true")
+            #     print(y_hat.argmax(dim=-1).detach().cpu().tolist())
+            #     print(y.detach().cpu().tolist())
+            #     log_selector(selective_actions, relevance_weights, x != 0)
 
         return loss
 
     def on_validation_epoch_end(self):
-        stage = "encoder_" if self.stage == 1 else ""
+        stage = "embedder_" if self.stage == 1 else ""
         for n, m in self.named_metrics_val.items():
             self.log(f"{stage}val_epoch_{n}", m.compute(), prog_bar=True)
             m.reset()

@@ -1,4 +1,7 @@
 lightning_logs
+*.csv
+*.edf
+*.npz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

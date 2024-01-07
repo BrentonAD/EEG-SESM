@@ -131,7 +131,7 @@ class Model(nn.Module):
 
     def classifier(self, sequence):
         x = self.embedder(sequence)
-        # (Batch, Hidden, Seqlen//2)
+        # (Batch, Hidden, Seqlen)
         x = self.conceptizer.encoder(x)
         x = x.reshape(x.shape[0], -1)
         return self.aggregator.fc(x)

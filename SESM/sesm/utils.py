@@ -5,7 +5,7 @@ import pandas as pd
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 
-from datasets import ArrhythmiaDataset
+from datasets import ArrhythmiaDataset, SleepEdfDataset
 
 def log_selector(selector1, selector2, mask):
     assert selector1.shape[1] == selector2.shape[1], "different selector heads"
@@ -41,17 +41,22 @@ def seed_everything(seed: int):
     torch.backends.cudnn.benchmark = True
 
 
-def get_data(name="ecg", batch_size=64):
-    dataset = ArrhythmiaDataset('datasets/ecg', normalize=False)
-    
+def get_data(name="sleep_edf", batch_size=64):
+    if name=='arrhythmia':
+        dataset = ArrhythmiaDataset('datasets/ecg', normalize=False)
+    elif name=='sleep_edf':
+        dataset = SleepEdfDataset('datasets/eeg/sleep_edf/prepared', 'fpz_cz', [0,1], [2])
+    else:
+        raise ValueError("Value for 'name' must be either 'arrhythmia' or 'sleep_edf'")
+
     train_dl = DataLoader(
         TensorDataset(dataset.X_train, dataset.y_train), batch_size, shuffle=True, num_workers=4
     )
-    test_dl = DataLoader(
-        TensorDataset(dataset.X_test, dataset.y_test), batch_size, shuffle=False, num_workers=4
+    val_dl = DataLoader(
+        TensorDataset(dataset.X_val, dataset.y_val), batch_size, shuffle=False, num_workers=4
     )
     max_len = dataset.sequence_length
-    return train_dl, test_dl, dataset.class_weights, max_len
+    return train_dl, val_dl, dataset.class_weights, max_len
 
 def my_optim(params, lr, wd, warmup_steps, use_scheduler=False):
     optimizer = torch.optim.AdamW(

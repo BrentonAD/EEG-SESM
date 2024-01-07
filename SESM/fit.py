@@ -21,7 +21,7 @@ def get_freer_gpu():
 
 
 def main():
-    config = json.load(open("configs/ecg.json", "r"))
+    config = json.load(open("configs/sleep_edf.json", "r"))
 
     pl.seed_everything(config["seed"])
 
@@ -45,13 +45,13 @@ def main():
             monitor="embedder_val_y_loss", save_last=True
         )
         tb_logger = pl.loggers.TensorBoardLogger(
-            name="embedder_cnn_ecg", save_dir="lightning_logs/"
+            name="embedder_cnn_sleep_edf", save_dir="lightning_logs/"
         )
         trainer = pl.Trainer(
             max_epochs=20,
             #gpus=[free_gpu_id],
             logger=tb_logger,
-            callbacks=[checkpoint_callback],
+            callbacks=[checkpoint_callback,early_stop_callback],
             gradient_clip_val=5,
             gradient_clip_algorithm="value",
         )
@@ -70,13 +70,13 @@ def main():
 
     # train sesm
     early_stop_callback = EarlyStopping(
-        monitor="val_y_loss",
+        monitor="val_loss",
         patience=30,
         verbose=False,
     )
     checkpoint_callback = ModelCheckpoint(monitor="val_loss", save_last=True)
     tb_logger = pl.loggers.TensorBoardLogger(
-        name="sesm_ecg", save_dir="lightning_logs/"
+        name="sesm_sleep_edf", save_dir="lightning_logs/"
     )
     trainer = pl.Trainer(
         # max_epochs=500,
@@ -89,7 +89,7 @@ def main():
         max_epochs=100,
         #gpus=[free_gpu_id],
         logger=tb_logger,
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback, early_stop_callback],
         gradient_clip_val=5,
         gradient_clip_algorithm="value",
     )
@@ -98,8 +98,8 @@ def main():
     # new_lr = lr_finder.suggestion()
     # print("suggested lr", new_lr)
     # model.lr = new_lr
-
     trainer.fit(model, train_loader, test_loader)
+
     model = PLModel.load_from_checkpoint(
         checkpoint_path=checkpoint_callback.best_model_path, **config
     )
