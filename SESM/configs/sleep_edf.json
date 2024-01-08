@@ -1,7 +1,7 @@
 {
     "seed": 42,
     "dataset": "sleep_edf",
-    "batch_size": 50,
+    "batch_size": 16,
     "d_input": 1,
     "d_embed": 64,
     "n_heads": 8,
