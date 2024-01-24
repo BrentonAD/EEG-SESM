@@ -55,8 +55,12 @@ def get_data(name="sleep_edf", batch_size=64):
     val_dl = DataLoader(
         TensorDataset(dataset.X_val, dataset.y_val), batch_size, shuffle=False, num_workers=4
     )
+    test_dl = DataLoader(
+        TensorDataset(dataset.X_test, dataset.y_test), batch_size, shuffle=False, num_workers=4
+    )
+
     max_len = dataset.sequence_length
-    return train_dl, val_dl, dataset.class_weights, max_len
+    return train_dl, val_dl, test_dl, dataset.class_weights, max_len
 
 def my_optim(params, lr, wd, warmup_steps, use_scheduler=False):
     optimizer = torch.optim.AdamW(

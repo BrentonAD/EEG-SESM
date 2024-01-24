@@ -106,13 +106,13 @@ class SleepEdfDataset(BaseDataset):
         validation_ids_pattern = '|'.join(map(lambda n: str(n).zfill(2), self.val_subject_ids))
         test_ids_pattern = '|'.join(map(lambda n: str(n).zfill(2), self.test_subject_ids))
         
-        validation_pattern = re.compile(f"SC4({validation_ids_pattern})[1-9]E0.npz")
-        test_pattern = re.compile(f"SC4({test_ids_pattern})[1-9]E0.npz")
-        for f in allfiles:
+        validation_pattern = re.compile(f".*SC4({validation_ids_pattern})[1-9]E0.npz")
+        test_pattern = re.compile(f".*SC4({test_ids_pattern})[1-9]E0.npz")
+        for f in npzfiles:
             if validation_pattern.match(f):
-                validation_files.append(os.path.join(self.data_dir, f))
+                validation_files.append(f)
             elif test_pattern.match(f):
-                test_files.append(os.path.join(self.data_dir, f))
+                test_files.append(f)
 
         train_files = list(set(npzfiles) - set(validation_files) - set(test_files))
         train_files.sort()

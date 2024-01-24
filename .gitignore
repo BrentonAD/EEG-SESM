@@ -1,7 +1,10 @@
 lightning_logs
+test_outputs
 *.csv
 *.edf
 *.npz
+
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -28,7 +28,7 @@ def main():
     # free_gpu_id = get_freer_gpu()
     # print("select gpu:", free_gpu_id)
 
-    train_loader, test_loader, class_weights, max_len = get_data(
+    train_loader, val_loader, test_loader, class_weights, max_len = get_data(
         config["dataset"], config["batch_size"]
     )
 
@@ -45,7 +45,7 @@ def main():
             monitor="embedder_val_y_loss", save_last=True
         )
         tb_logger = pl.loggers.TensorBoardLogger(
-            name="embedder_cnn_sleep_edf", save_dir="lightning_logs/"
+            name="embedder_cnn_sleep_edf", save_dir="lightning_logs"
         )
         trainer = pl.Trainer(
             max_epochs=20,
@@ -55,14 +55,14 @@ def main():
             gradient_clip_val=5,
             gradient_clip_algorithm="value",
         )
-        trainer.fit(model, train_loader, test_loader)
+        trainer.fit(model, train_loader, val_loader)
         model = PLModel.load_from_checkpoint(
             checkpoint_path=checkpoint_callback.best_model_path, **config
         )
-        torch.save(model.model.cpu().state_dict(), "models/trained_embedder.pt")
+        torch.save(model.model.cpu().state_dict(), os.path.join("models","trained_embedder.pt"))
 
     model = PLModel(stage=2, **config)
-    model.model.load_state_dict(torch.load("models/trained_embedder.pt"))
+    model.model.load_state_dict(torch.load(os.path.join("models","trained_embedder.pt")))
 
     # fix embed
     for p in model.model.embedder.embed.parameters():
@@ -76,7 +76,7 @@ def main():
     )
     checkpoint_callback = ModelCheckpoint(monitor="val_loss", save_last=True)
     tb_logger = pl.loggers.TensorBoardLogger(
-        name="sesm_sleep_edf", save_dir="lightning_logs/"
+        name="sesm_sleep_edf", save_dir="lightning_logs"
     )
     trainer = pl.Trainer(
         # max_epochs=500,
@@ -98,12 +98,12 @@ def main():
     # new_lr = lr_finder.suggestion()
     # print("suggested lr", new_lr)
     # model.lr = new_lr
-    trainer.fit(model, train_loader, test_loader)
+    trainer.fit(model, train_loader, val_loader)
 
     model = PLModel.load_from_checkpoint(
         checkpoint_path=checkpoint_callback.best_model_path, **config
     )
-    torch.save(model.model.cpu().state_dict(), "models/trained_model.pt")
+    torch.save(model.model.cpu().state_dict(), os.path.join("models","trained_model.pt"))
 
 
 if __name__ == "__main__":

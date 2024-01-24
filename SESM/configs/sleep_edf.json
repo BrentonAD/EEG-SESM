@@ -27,5 +27,5 @@
     "lr": 1e-3,
     "wd": 0,
     "warm_up_step": 5,
-    "train_embedder": false
+    "train_embedder": true
 }
