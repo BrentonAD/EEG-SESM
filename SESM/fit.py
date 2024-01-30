@@ -48,7 +48,7 @@ def main():
             name="embedder_cnn_sleep_edf", save_dir="lightning_logs"
         )
         trainer = pl.Trainer(
-            max_epochs=20,
+            max_epochs=35,
             #gpus=[free_gpu_id],
             logger=tb_logger,
             callbacks=[checkpoint_callback,early_stop_callback],
@@ -86,7 +86,7 @@ def main():
         # amp_level="O2",
         # deterministic=True,
         # auto_lr_find=True,
-        max_epochs=20,
+        max_epochs=50,
         #gpus=[free_gpu_id],
         logger=tb_logger,
         callbacks=[checkpoint_callback, early_stop_callback],
