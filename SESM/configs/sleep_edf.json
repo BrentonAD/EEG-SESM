@@ -4,9 +4,9 @@
     "batch_size": 16,
     "d_input": 1,
     "d_embed": 64,
-    "n_heads": 8,
+    "n_heads": 4,
     "d_hidden": 64,
-    "d_kernel": 10,
+    "d_kernel": 50,
     "n_layers": 2,
     "d_out": 5,
     "dropout": 0.2,
@@ -20,7 +20,7 @@
     ],
     "w_constraints": [
         1.0,
-        0.1,
+        0.5,
         0.1,
         0.0
     ],
