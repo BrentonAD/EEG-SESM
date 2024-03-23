@@ -41,11 +41,11 @@ def seed_everything(seed: int):
     torch.backends.cudnn.benchmark = True
 
 
-def get_data(name="sleep_edf", batch_size=64):
+def get_data(name="sleep_edf", base_dir=".", batch_size=64):
     if name=='arrhythmia':
-        dataset = ArrhythmiaDataset('datasets/ecg', normalize=False)
+        dataset = ArrhythmiaDataset(base_dir+'/'+'datasets/ecg', normalize=False)
     elif name=='sleep_edf':
-        dataset = SleepEdfDataset('datasets/eeg/sleep_edf/prepared', 'fpz_cz', [0,1], [2])
+        dataset = SleepEdfDataset(base_dir+'/'+'sleep_edf/prepared', 'fpz_cz', [0,1], [2])
     else:
         raise ValueError("Value for 'name' must be either 'arrhythmia' or 'sleep_edf'")
 
