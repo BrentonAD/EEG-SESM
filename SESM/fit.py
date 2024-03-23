@@ -15,9 +15,20 @@ import os
 
 
 def get_freer_gpu():
-    os.system("nvidia-smi -q -d Memory |grep -A4 GPU|grep Free >tmp")
-    memory_available = [int(x.split()[2]) for x in open("tmp", "r").readlines()]
-    return np.argmax(memory_available)
+    # Run nvidia-smi command to get GPU memory info
+    command = "nvidia-smi --query-gpu=memory.free,memory.total --format=csv,noheader,nounits"
+    output = os.popen(command).read().strip().split('\n')
+
+    # Parse the output to find GPU with most free memory
+    max_memory = -1
+    max_memory_index = -1
+    for index, line in enumerate(output):
+        free_memory, _ = map(int, line.split(', '))
+        if free_memory > max_memory:
+            max_memory = free_memory
+            max_memory_index = index
+
+    return max_memory_index
 
 
 def main():
@@ -25,11 +36,12 @@ def main():
 
     pl.seed_everything(config["seed"])
 
-    # free_gpu_id = get_freer_gpu()
-    # print("select gpu:", free_gpu_id)
+    free_gpu_id = get_freer_gpu()
+    #free_gpu_id=0
+    print("select gpu:", free_gpu_id)
 
     train_loader, val_loader, test_loader, class_weights, max_len = get_data(
-        config["dataset"], config["batch_size"]
+        config["dataset"], "E:\s222165064", config["batch_size"]
     )
 
     config.update({"class_weights": class_weights, "max_len": max_len})
@@ -48,8 +60,9 @@ def main():
             name="embedder_cnn_sleep_edf", save_dir="lightning_logs"
         )
         trainer = pl.Trainer(
-            max_epochs=35,
-            #gpus=[free_gpu_id],
+            max_epochs=50,
+            accelerator="gpu",
+            devices=[free_gpu_id],
             logger=tb_logger,
             callbacks=[checkpoint_callback,early_stop_callback],
             gradient_clip_val=5,
@@ -87,7 +100,8 @@ def main():
         # deterministic=True,
         # auto_lr_find=True,
         max_epochs=50,
-        #gpus=[free_gpu_id],
+        accelerator="gpu",
+        devices=[free_gpu_id],
         logger=tb_logger,
         callbacks=[checkpoint_callback, early_stop_callback],
         gradient_clip_val=5,
