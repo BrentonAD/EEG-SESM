@@ -118,10 +118,12 @@ class Model(nn.Module):
         d_kernel,
         d_out,
         dropout=0.2,
+        dmin=1,
         **kwargs
     ):
         super().__init__()
         self.d_kernel = d_kernel
+        self.dmin = dmin
 
         # Define the components
         self.embedder = Embedder(d_input, d_embed, d_kernel)
@@ -159,7 +161,7 @@ class Model(nn.Module):
         # (Batch, d_out)
 
         ## Calculate regularisation constraints
-        L_diversity = self._diversity_term(selective_actions)
+        L_diversity = self._diversity_term(selective_actions, dmin=self.dmin)
         L_stability = self._stability_term(
             x_concepts_encoded, relevance_weights
         )
@@ -173,12 +175,12 @@ class Model(nn.Module):
             relevance_weights,
         )
 
-    def _diversity_term(self, x, d="euclidean", eps=1e-9):
+    def _diversity_term(self, x, d="euclidean", eps=1e-9, dmin=1.0):
 
         if d == "euclidean":
             # euclidean distance
             D = torch.cdist(x, x, 2)
-            Rd = torch.relu(-D + 2)
+            Rd = torch.relu(-D + dmin)
 
             zero_diag = torch.ones_like(Rd, device=Rd.device) - torch.eye(
                 x.shape[-2], device=Rd.device
@@ -194,7 +196,7 @@ class Model(nn.Module):
                 x.shape[-2], device=D.device
             )
             return (D * zero_diag).sum() / 2.0
-
+        
         else:
             raise NotImplementedError
 
