@@ -27,7 +27,7 @@ class MotorImageryDataset(BaseDataset):
         self.data_dir = Path(data_dir)
         assert self.data_dir.exists() and self.data_dir.is_dir(), "Directory must exist and be a folder"
 
-        self.sequence_length = 2560
+        self.sequence_length = 640
         self.input_shape = (self.sequence_length, 1)
 
         self.num_classes = 2

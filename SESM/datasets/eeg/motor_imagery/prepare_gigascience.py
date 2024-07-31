@@ -7,7 +7,7 @@ import numpy as np
 from scipy import stats
 import scipy.io as sio
 
-from mne import create_info
+from mne.filter import filter_data, resample
 from mne.io import RawArray
 
 PRE_EVENT_DURATION = 1
@@ -158,14 +158,16 @@ def main():
         x = np.concatenate((imagery_left, imagery_right), axis=0)
         y = np.concatenate((np.zeros(imagery_left.shape[0]), np.ones(imagery_right.shape[0])))
 
-        x_standardized = stats.zscore(x, axis=0)
+        x_filtered = filter_data(x.astype(np.float64), sample_rate, 3, 40, phase='zero', verbose=False)
+        # down sample to 100Hz
+        x_filtered_resampled = resample(x_filtered, down=sample_rate/128)
 
         # Save
         filename = os.path.basename(subject_file).replace(".mat", ".npz")
         save_dict = {
-            "x": x_standardized, 
+            "x": x_filtered_resampled, 
             "y": y, 
-            "fs": sample_rate,
+            "fs": 128,
             "ch_labels": select_channels
         }
         np.savez(os.path.join(args.output_dir, filename), **save_dict)

@@ -1,0 +1,32 @@
+{
+    "seed": 42,
+    "dataset": "sleep_edf",
+    "batch_size": 16,
+    "d_input": 1,
+    "d_embed": 64,
+    "n_heads": 5,
+    "d_hidden": 64,
+    "d_kernel": 20,
+    "n_layers": 2,
+    "d_out": 5,
+    "dropout": 0.2,
+    "use_pretrained": false,
+    "path_pretrained": null,
+    "name_constraints": [
+        "diversity",
+        "stability",
+        "locality",
+        "simplicity"
+    ],
+    "w_constraints": [
+        1,
+        0.2,
+        0.2,
+        0.0
+    ],
+    "dmin": 2,
+    "lr": 1e-3,
+    "wd": 0,
+    "warm_up_step": 5,
+    "train_embedder": true
+}
