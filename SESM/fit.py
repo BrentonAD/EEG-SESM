@@ -13,6 +13,20 @@ from sesm import get_data
 
 import os
 
+SPLITS = [
+{"validation_ids": [43,13,4,35,11], "test_ids": [14,3,25,52,30]},
+{"validation_ids": [51,30,5,49,12], "test_ids": [18,2,11,42,39]},
+{"validation_ids": [4,9,13,40,7], "test_ids": [52,29,22,35,17]},
+{"validation_ids": [47,51,35,37,39], "test_ids": [2,23,28,42,41]},
+{"validation_ids": [44,16,5,7,15], "test_ids": [51,30,40,52,20]},
+{"validation_ids": [51,42,6,12,5], "test_ids": [31,46,36,2,39]},
+{"validation_ids": [24,32,1,9,19], "test_ids": [39,5,27,25,15]},
+{"validation_ids": [49,34,19,28,44], "test_ids": [13,29,41,16,50]},
+{"validation_ids": [28,34,26,1,29], "test_ids": [35,11,51,21,6]},
+{"validation_ids": [11,3,28,41,39], "test_ids": [25,42,6,1,51]},
+]
+
+SPLIT_ID=6
 
 def get_freer_gpu():
     # Run nvidia-smi command to get GPU memory info
@@ -42,7 +56,7 @@ def main():
 
     train_loader, val_loader, test_loader, class_weights, max_len = get_data(
         config["dataset"], "E:\s222165064", config["batch_size"],
-        [11,3,28,41,39],[25,42,6,1,51]
+        SPLITS[SPLIT_ID]["validation_ids"], SPLITS[SPLIT_ID]["test_ids"]
     )
 
     config.update({"class_weights": class_weights, "max_len": max_len})
@@ -73,10 +87,10 @@ def main():
         model = PLModel.load_from_checkpoint(
             checkpoint_path=checkpoint_callback.best_model_path, **config
         )
-        torch.save(model.model.cpu().state_dict(), os.path.join("models","trained_embedder_split9.pt"))
+        torch.save(model.model.cpu().state_dict(), os.path.join("models",f"trained_embedder_{SPLIT_ID}.pt"))
 
     model = PLModel(stage=2, **config)
-    model.model.load_state_dict(torch.load(os.path.join("models","trained_embedder_split9.pt")))
+    model.model.load_state_dict(torch.load(os.path.join("models",f"trained_embedder_{SPLIT_ID}.pt")))
 
     # fix embed
     for p in model.model.embedder.embed.parameters():
@@ -100,7 +114,7 @@ def main():
         # amp_level="O2",
         # deterministic=True,
         # auto_lr_find=True,
-        max_epochs=50,
+        max_epochs=150,
         accelerator="gpu",
         devices=[free_gpu_id],
         logger=tb_logger,
@@ -118,7 +132,7 @@ def main():
     # model = PLModel.load_from_checkpoint(
     #     checkpoint_path=checkpoint_callback.best_model_path, **config
     # )
-    torch.save(model.model.cpu().state_dict(), os.path.join("models","trained_model_split9.pt"))
+    torch.save(model.model.cpu().state_dict(), os.path.join("models",f"trained_model_{SPLIT_ID}.pt"))
 
 
 if __name__ == "__main__":
