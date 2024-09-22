@@ -55,7 +55,7 @@ def main():
     print("select gpu:", free_gpu_id)
 
     train_loader, val_loader, test_loader, class_weights, max_len = get_data(
-        config["dataset"], "E:\s222165064", config["batch_size"],
+        config["dataset"], "E:\data", config["batch_size"],
         SPLITS[SPLIT_ID]["validation_ids"], SPLITS[SPLIT_ID]["test_ids"]
     )
 

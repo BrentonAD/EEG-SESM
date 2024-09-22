@@ -47,7 +47,7 @@ def main():
     config = json.load(open(f"configs/sleep_edf_exp{EXPERIMENT_ID}.json", "r"))
     #config = json.load(open(f"configs/sleep_edf_exp37-40.json", "r"))
     train_loader, val_loader, test_loader, class_weights, max_len = get_data(
-        config["dataset"], "E:\s222165064", config["batch_size"],
+        config["dataset"], "E:\data", config["batch_size"],
         val_subject_ids=[0,1],
         test_subject_ids=[2,7,12]
     )
