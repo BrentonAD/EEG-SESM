@@ -47,7 +47,7 @@ def get_data(name="sleep_edf", base_dir=".", batch_size=64, val_subject_ids=[0,1
     elif name=='sleep_edf':
         dataset = SleepEdfDataset(base_dir+'/'+'sleep_edf/prepared', 'fpz_cz', val_subject_ids, test_subject_ids)
     elif name=='motor_imagery':
-        dataset = MotorImageryDataset(base_dir+'/'+'motor_imagery/prepared', val_subject_ids, test_subject_ids)
+        dataset = MotorImageryDataset(base_dir+'/'+'motor_imagery/prepared_1ch', val_subject_ids, test_subject_ids)
     else:
         raise ValueError("Value for 'name' must be 'arrhythmia' or 'sleep_edf' or 'motor_imagery'")
 

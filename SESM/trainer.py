@@ -19,6 +19,10 @@ class PLModel(pl.LightningModule):
         self.wd = kwargs["wd"]
         self.warm_up_step = kwargs["warm_up_step"]
         self.class_weights = torch.Tensor(kwargs["class_weights"])
+        
+        self.pos_weight = self.class_weights[0]/self.class_weights[0] if kwargs["d_out"]==1 else None
+
+        self.d_out = kwargs["d_out"]
 
         self.init_metrics(kwargs["d_out"])
 
@@ -26,23 +30,41 @@ class PLModel(pl.LightningModule):
         self.stage = stage  # 1 for train embedder, 2 for train all
 
     def init_metrics(self, k):
-        self.named_metrics_train = nn.ModuleDict(
-            {
-                "acc": torchmetrics.Accuracy(task='multiclass', num_classes=k, average="micro"),
-                "avg_p": torchmetrics.Precision(task='multiclass', num_classes=k, average="macro"),
-                "avg_r": torchmetrics.Recall(task='multiclass', num_classes=k, average="macro"),
-            }
-        )
-        self.named_metrics_val = nn.ModuleDict(
-            {
-                "acc": torchmetrics.Accuracy(task='multiclass', num_classes=k, average="micro"),
-                "avg_p": torchmetrics.Precision(task='multiclass', num_classes=k, average="macro"),
-                "avg_r": torchmetrics.Recall(task='multiclass', num_classes=k, average="macro"),
-            }
-        )
+
+        if k ==1:
+            self.named_metrics_train = nn.ModuleDict(
+                {
+                    "acc": torchmetrics.Accuracy(task='binary'),
+                    "avg_p": torchmetrics.Precision(task='binary'),
+                    "avg_r": torchmetrics.Recall(task='binary'),
+                }
+            )
+            self.named_metrics_val = nn.ModuleDict(
+                {
+                    "acc": torchmetrics.Accuracy(task='binary'),
+                    "avg_p": torchmetrics.Precision(task='binary'),
+                    "avg_r": torchmetrics.Recall(task='binary'),
+                }
+            )
+        else:
+            self.named_metrics_train = nn.ModuleDict(
+                {
+                    "acc": torchmetrics.Accuracy(task='multiclass', num_classes=k, average="micro"),
+                    "avg_p": torchmetrics.Precision(task='multiclass', num_classes=k, average="macro"),
+                    "avg_r": torchmetrics.Recall(task='multiclass', num_classes=k, average="macro"),
+                }
+            )
+            self.named_metrics_val = nn.ModuleDict(
+                {
+                    "acc": torchmetrics.Accuracy(task='multiclass', num_classes=k, average="micro"),
+                    "avg_p": torchmetrics.Precision(task='multiclass', num_classes=k, average="macro"),
+                    "avg_r": torchmetrics.Recall(task='multiclass', num_classes=k, average="macro"),
+                }
+            )
 
     def forward(self, x, y):
-        mask = x != 0
+        #mask = x != 0
+        mask = None
         if self.stage == 1:
             y_hat = self.model.classifier(x)
             loss = self.log_loss(y_hat, y, constraints=None)
@@ -76,10 +98,14 @@ class PLModel(pl.LightningModule):
         if self.stage == 1:
             stage = "embedder_" + stage
 
-        y_loss = F.cross_entropy(
-            y_hat, y.long(), weight=self.class_weights.to(y_hat.device)
-        )
-
+        if self.d_out == 1:
+            y_loss = F.binary_cross_entropy_with_logits(
+                y_hat.reshape(-1), y, pos_weight=self.pos_weight.to(y_hat.device)
+            )
+        else:
+            y_loss = F.cross_entropy(
+                y_hat, y.long(), weight=self.class_weights.to(y_hat.device)
+            )
         # constraints
         if constraints is not None:
             c_loss = 0.0
@@ -92,7 +118,10 @@ class PLModel(pl.LightningModule):
 
         # metrics
         for n, m in named_metrics.items():
-            self.log(f"{stage}_step_{n}", m(y_hat.argmax(-1), y), prog_bar=True)
+            if self.d_out == 1:
+                self.log(f"{stage}_step_{n}", m(torch.sigmoid(y_hat).reshape(-1), y), prog_bar=True)
+            else:
+                self.log(f"{stage}_step_{n}", m(y_hat.argmax(-1), y), prog_bar=True)
         self.log(f"{stage}_loss", loss)
         self.log(f"{stage}_y_loss", y_loss, prog_bar=True)
         return loss
